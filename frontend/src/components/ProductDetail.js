@@ -1,33 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
-const ProductDetail = () => {
+const ProductDetail = ({ removeFromDom }) => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [product, setProduct] = useState(null);
 
     useEffect(() => {
-        const fetchProduct = async () => {
-        try {
-            const response = await fetch(`http://localhost:8000/api/products/${id}`);
-            const data = await response.json();
-            setProduct(data);
-        } catch (error) {
-            console.error('Error fetching product:', error);
-        }
-        };
-
-        fetchProduct();
+        axios.get('http://localhost:8000/api/products/' + id)
+        .then(res => setProduct(res.data))
+        .catch(err => console.log(err));
     }, [id]);
 
-    if (!product) {
-        return <div>Loading...</div>;
-    }
+    const deleteProduct = () => {
+        axios.delete('http://localhost:8000/api/products/' + id)
+        .then(res => {
+            removeFromDom(id);
+            navigate('/');
+        })
+        .catch(err => console.log(err));
+    };
+
+    if (!product) return <div>Loading...</div>;
 
     return (
         <div>
         <h2>{product.title}</h2>
-        <p>Price: ${product.price}</p>
+        <p>Price: {product.price}</p>
         <p>Description: {product.description}</p>
+        <button onClick={deleteProduct}>Delete</button>
+        <Link to={`/products/${id}/edit`}>Edit</Link>
         </div>
     );
 };
